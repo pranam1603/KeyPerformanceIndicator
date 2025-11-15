@@ -1,7 +1,7 @@
 package com.example;
 
 import com.google.gson.Gson;
-import KpiIndicator.KpiIndicator;
+import com.example.KpiIndicator.KpiIndicator;
 import com.google.gson.reflect.TypeToken;
 import com.example.oneBusLoader.GTFSLoader;
 import com.example.oneBusLoader.GraphBuilder;

@@ -1,4 +1,4 @@
-package KpiIndicator;
+package com.example.KpiIndicator;
 
 import com.example.GridCenterFinder.GridCenterFinder;
 import org.onebusaway.gtfs.model.Stop;
