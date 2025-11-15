@@ -1,0 +1,92 @@
+[
+  {
+    "origin": "250mN303400E446200",
+    "destination": "250mN302550E443700",
+    "timeslots": {
+      "06-08": { "school": 4.4, "work": 8.0 },
+      "12-14": { "shopping": 6.2 },
+      "20-22": { "leisure": 10.8 }
+    }
+  },
+  {
+    "origin": "250mN299925E444525",
+    "destination": "250mN303575E444875",
+    "timeslots": {
+      "10-12": { "shopping": 8.6, "work": 4.2 },
+      "16-18": { "leisure": 12.4 },
+      "22-00": { "school": 6.0 }
+    }
+  },
+  {
+    "origin": "250mN303075E443475",
+    "destination": "250mN304175E443400",
+    "timeslots": {
+      "00-02": { "work": 10.4, "shopping": 8.2 },
+      "08-10": { "school": 6.6 },
+      "18-20": { "leisure": 12.2, "shopping": 4.0 }
+    }
+  },
+  {
+    "origin": "250mN302725E446675",
+    "destination": "250mN303875E444050",
+    "timeslots": {
+      "02-04": { "work": 8.8, "school": 6.4 },
+      "14-16": { "shopping": 10.2 },
+      "22-00": { "leisure": 12.6, "shopping": 4.8 }
+    }
+  },
+  {
+    "origin": "250mN300725E442775",
+    "destination": "250mN299925E444525",
+    "timeslots": {
+      "04-06": { "shopping": 6.2 },
+      "12-14": { "school": 4.4, "work": 10.8 },
+      "20-22": { "leisure": 8.0 }
+    }
+  },
+  {
+    "origin": "250mN303575E444875",
+    "destination": "250mN303075E443475",
+    "timeslots": {
+      "08-10": { "work": 6.8 },
+      "10-12": { "shopping": 8.0, "leisure": 6.4 },
+      "18-20": { "school": 12.2 }
+    }
+  },
+  {
+    "origin": "250mN304175E443400",
+    "destination": "250mN302725E446675",
+    "timeslots": {
+      "00-02": { "shopping": 6.0 },
+      "14-16": { "leisure": 8.2, "work": 4.8 },
+      "22-00": { "school": 10.4 }
+    }
+  },
+  {
+    "origin": "250mN303875E444050",
+    "destination": "250mN303400E446200",
+    "timeslots": {
+      "06-08": { "shopping": 4.2, "work": 10.6 },
+      "12-14": { "leisure": 6.8 },
+      "18-20": { "school": 8.0, "shopping": 12.4 }
+    }
+  },
+  {
+    "origin": "250mN303400E446200",
+    "destination": "250mN300725E442775",
+    "timeslots": {
+      "10-12": { "shopping": 8.4 },
+      "16-18": { "work": 12.0 },
+      "20-22": { "school": 6.2, "leisure": 4.0 }
+    }
+  },
+  {
+    "origin": "250mN302550E443700",
+    "destination": "250mN304175E443400",
+    "timeslots": {
+      "00-02": { "shopping": 6.6, "work": 10.8 },
+      "08-10": { "leisure": 8.0 },
+      "18-20": { "school": 12.2 }
+    }
+  }
+]
