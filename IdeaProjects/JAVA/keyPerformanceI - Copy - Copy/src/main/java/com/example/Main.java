@@ -67,8 +67,8 @@ public class Main {
                 String[] parts = time.split("-");
 
                 int startHour = Integer.parseInt(parts[0]);  // "08" → 8
-                LocalDate travelDate = LocalDate.of(2025, 11, 14);
-                LocalTime travelTime = LocalTime.of(6, 17);
+                LocalDate travelDate = LocalDate.now();
+                LocalTime travelTime = LocalTime.of(startHour, 00);
 
                 LocalDateTime startDateTime = LocalDateTime.of(travelDate, travelTime);
 

@@ -149,7 +149,7 @@ public class KpiIndicator {
         System.out.println("Kpi Indicator: " + kpi);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(kpiFilePath, true))) {
-            writer.write(startStop.getId().getId() + "," + endStop.getId().getId() + "," + kpi);
+            writer.write(origin + "," + destination + "," + kpi);
             writer.newLine();
             System.out.println("KPI written for stop " + endStop.getId());
         } catch (IOException e) {

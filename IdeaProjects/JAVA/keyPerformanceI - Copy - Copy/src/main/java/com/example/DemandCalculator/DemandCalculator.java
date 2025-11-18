@@ -18,6 +18,7 @@ import org.locationtech.jts.operation.buffer.BufferOp;
 import org.opengis.referencing.operation.MathTransform;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import pabeles.concurrency.IntOperatorTask;
 
 import java.io.File;
 import java.util.*;
@@ -34,7 +35,7 @@ public class DemandCalculator {
         // ----------------------------
         // STEP 1: Calculate buffer distance
         // ----------------------------
-        double bufferDistanceMeters = (double) (timeMinutes * walkingSpeed);
+        double bufferDistanceMeters = Math.min(600.00, (double) (timeMinutes * walkingSpeed));
         System.out.println("From demand calculator: " + timeMinutes + " minutes");
         System.out.println("Buffer radius: " + bufferDistanceMeters + " meters");
 
