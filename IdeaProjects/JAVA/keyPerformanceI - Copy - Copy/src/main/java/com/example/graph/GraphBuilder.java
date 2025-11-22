@@ -1,21 +1,24 @@
-package com.example.oneBusLoader;
+package com.example.OneBusLoader;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.onebusaway.gtfs.model.Trip;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.StopTime;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 
+import java.time.LocalTime;
 import java.util.List;
 
 public class GraphBuilder {
     private DefaultDirectedWeightedGraph<Stop, DefaultWeightedEdge> graph;
+    private static final Dotenv dotenv = Dotenv.load();
 
     public GraphBuilder() {
         graph = new DefaultDirectedWeightedGraph<>(DefaultWeightedEdge.class);
     }
 
-    public DefaultDirectedWeightedGraph<Stop, DefaultWeightedEdge> buildGraph(GTFSLoader loader, double walkingSpeed , double maxWalkingDistance) {
+    public DefaultDirectedWeightedGraph<Stop, DefaultWeightedEdge> buildGraph(GTFSLoader loader, LocalTime windowStart, LocalTime windowEnd, double walkingSpeed , double maxWalkingDistance) {
         // Add all stops as vertices
         for (Stop stop : loader.getAllStops()) {
             graph.addVertex(stop);
@@ -32,9 +35,14 @@ public class GraphBuilder {
                 Stop from = (Stop) st1.getStop();
                 Stop to = (Stop) st2.getStop();
 
-                // Calculate travel time in minutes
+                // Calculate travel time in second
                 int departureSec = st1.getDepartureTime();
                 int arrivalSec = st2.getArrivalTime();
+
+                if (departureSec < windowStart.toSecondOfDay() || departureSec > windowEnd.toSecondOfDay()) {
+                    continue;  // skip the rest of this loop iteration
+                }
+
                 double travelMinutes = (arrivalSec - departureSec) / 60.0;
 
                 // Skip negative or zero travel time (some GTFS may have errors)
@@ -42,6 +50,7 @@ public class GraphBuilder {
 
                 DefaultWeightedEdge edge = graph.addEdge(from, to);
                 if (edge != null) {
+                    // here add the time window
                     graph.setEdgeWeight(edge, travelMinutes);
                 }
             }

@@ -1,16 +1,16 @@
 package com.example.KpiIndicator;
 
 import com.example.GridCenterFinder.GridCenterFinder;
+import io.github.cdimascio.dotenv.Dotenv;
+//import jdk.internal.access.JavaIOFileDescriptorAccess;
 import org.onebusaway.gtfs.model.Stop;
-import com.example.oneBusLoader.GTFSLoader;
+import com.example.OneBusLoader.GTFSLoader;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import com.example.DemandCalculator.DemandCalculator;
-import com.example.StopToGridFinder.StopToGridFinder;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import com.example.BusScheduleFinder.BusScheduleFinder;
 import com.example.GraphhopperRequest.GraphhopperRequest;
 
-import java.util.Map;
 import java.util.List;
 import java.io.FileWriter;
 import java.time.Duration;
@@ -19,31 +19,36 @@ import java.util.ArrayList;
 import java.io.BufferedWriter;
 import java.time.LocalDateTime;
 
+
 public class KpiIndicator {
     Stop startStop;
     Stop endStop;
     String origin;
     String destination;
     String time;
+    Double maxWalkingDistance;
     String kpiFilePath;
     Double peopleFromOD;
     GTFSLoader loader;
     LocalDateTime startDateTime;
     DefaultDirectedWeightedGraph<Stop, DefaultWeightedEdge> graph;
     double walkingSpped;
+    private static final Dotenv dotenv = Dotenv.load();
 
-    public KpiIndicator(Stop startStop, Stop endStop, String origin, String destination, String time, String kpiFilePath, Double peopleFromOD, GTFSLoader loader, DefaultDirectedWeightedGraph<Stop,DefaultWeightedEdge> graph, LocalDateTime startDateTime, double walkingSpeed){
+    public KpiIndicator(Stop startStop, Stop endStop, String origin, String destination, String time, Double maxWalkingDistance, String kpiFilePath, Double peopleFromOD, GTFSLoader loader, DefaultDirectedWeightedGraph<Stop,DefaultWeightedEdge> graph, LocalDateTime startDateTime, double walkingSpeed){
         this.startDateTime = startDateTime;
         this.endStop = endStop;
         this.origin = origin;
         this.destination = destination;
         this.time = time;
+        this.maxWalkingDistance = maxWalkingDistance;
         this.kpiFilePath = kpiFilePath;
         this.peopleFromOD = peopleFromOD;
         this.startStop = startStop;
         this.graph = graph;
         this.walkingSpped = walkingSpeed;
         this.loader = loader;
+
     }
 
     public void calculateKpi() throws Exception {
@@ -82,14 +87,14 @@ public class KpiIndicator {
 
         double timeOriginBus = 0.0;
         double timeBusDestination = 0.0;
-        if(distanceOriginBus > 800){
+        if(distanceOriginBus > maxWalkingDistance){
             double tempCarTime =  graphhopperRequest.calculateTimeByCar(originLatLon.get(0), originLatLon.get(1), startStop.getLat(), startStop.getLon());
             timeOriginBus = (double)Math.round((tempCarTime/60000) * 100.0) / 100;
         } else{
             timeOriginBus = (distanceOriginBus/walkingSpped);
         }
 
-        if(distanceBusDestination > 800){
+        if(distanceBusDestination > maxWalkingDistance){
             double tempCarTime = graphhopperRequest.calculateTimeByCar(endStop.getLat(), endStop.getLon(), destinationLatLon.get(0), destinationLatLon.get(1));
             timeBusDestination = (double)Math.round((tempCarTime/60000) * 100.0) / 100;
         } else{
@@ -125,7 +130,11 @@ public class KpiIndicator {
         double diffMinutes = Duration.between(previousBus, nextBus).toMinutes();
         System.out.println("Time Difference btw Busses: " + diffMinutes);
 
-        double acceptableTime = 2*adjustedTime;
+        double kpiCarVar = Double.parseDouble(dotenv.get("kpiCarVar"));
+        System.out.println("Kpi Car Variable: " + kpiCarVar);
+        double acceptableTime = kpiCarVar * adjustedTime;
+        System.out.println("Acceptable Time: " + acceptableTime);
+
         double margin = 0;
         if(acceptableTime >= totalTravelTime){
             margin = (double)(acceptableTime-totalTravelTime)/diffMinutes;
@@ -133,8 +142,9 @@ public class KpiIndicator {
         }
         double numberOfPeopleFromDemand = 0.0;
         double timeInMinutes = (double)(acceptableTime-totalTravelTime);
+        double kpi = 0.0;
         System.out.println("Time in Minutes: " + timeInMinutes);
-        if(timeInMinutes > 0){
+        if(timeInMinutes >= 0){
             List<String> intersectGrids = DemandCalculator.getIntersectGrids(origin, originLatLon.get(1), originLatLon.get(0), timeInMinutes, walkingSpped);
             System.out.println("Intersecting Grids: " + intersectGrids);
 
@@ -142,12 +152,11 @@ public class KpiIndicator {
                 numberOfPeopleFromDemand = DemandCalculator.getTotalDemand(intersectGrids, time, destination);
             }
             System.out.println("Demand from D->S: " + numberOfPeopleFromDemand);
+            double numberOfPeople = numberOfPeopleFromDemand + peopleFromOD;
+            System.out.println("Total Demand: " + numberOfPeople);
+            kpi = numberOfPeople*margin;
+            System.out.println("Kpi Indicator: " + kpi);
         }
-        double numberOfPeople = numberOfPeopleFromDemand + peopleFromOD;
-        System.out.println("Total Demand: " + numberOfPeople);
-        double kpi = numberOfPeople*margin;
-        System.out.println("Kpi Indicator: " + kpi);
-
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(kpiFilePath, true))) {
             writer.write(origin + "," + destination + "," + kpi);
             writer.newLine();

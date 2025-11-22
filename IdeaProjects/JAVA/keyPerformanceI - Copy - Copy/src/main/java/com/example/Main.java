@@ -3,10 +3,11 @@ package com.example;
 import com.google.gson.Gson;
 import com.example.KpiIndicator.KpiIndicator;
 import com.google.gson.reflect.TypeToken;
-import com.example.oneBusLoader.GTFSLoader;
-import com.example.oneBusLoader.GraphBuilder;
+import com.example.OneBusLoader.GTFSLoader;
+import com.example.OneBusLoader.GraphBuilder;
 import com.example.DemandCalculator.DemandCalculator;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.onebusaway.gtfs.model.Stop;
@@ -24,12 +25,11 @@ import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 public class Main {
-
+    private static final Dotenv dotenv = Dotenv.load();
     public static void main(String[] args) throws Exception {
-        // ------------------- Set up GTFS and start time -------------------
 
-        double walkingSpeed = 80.0; // meters per minute (~5 km/h)
-        double maxWalkingDistance = 800.0; // meters
+        double walkingSpeed = Double.parseDouble(dotenv.get("walkingSpeed")); // meters per minute (~5 km/h)
+        double maxWalkingDistance = Double.parseDouble(dotenv.get("maxWalkingDistance")); // meters
 
         String jsonData = """
                 [
@@ -37,7 +37,7 @@ public class Main {
                         "origin": "250mN301850E444750",
                         "destination": "250mN301925E445000",
                         "timeslots": {
-                            "08-10" : {
+                            "12-14" : {
                                 "work": 19.20,
                                 "shopping": 2.15
                             }
@@ -58,37 +58,40 @@ public class Main {
             for(Map.Entry<String, Object> timeslot: timeslots.entrySet()){
                 String time = timeslot.getKey();
                 Map<String, Object> activities = (Map<String, Object>) timeslot.getValue();
-                Double  peopleFromOD = 0.0;
+                double peopleFromOD = 0.0;
 
                 for(Map.Entry<String, Object> activity: activities.entrySet()){
-                    Double people = ((Number) activity.getValue()).doubleValue();
+                    double people = ((Number) activity.getValue()).doubleValue();
                     peopleFromOD+=people;
                 }
                 String[] parts = time.split("-");
 
                 int startHour = Integer.parseInt(parts[0]);  // "08" → 8
-                LocalDate travelDate = LocalDate.now();
-                LocalTime travelTime = LocalTime.of(startHour, 00);
+                int endHour = Integer.parseInt(parts[1]);  // "08" → 8
 
-                LocalDateTime startDateTime = LocalDateTime.of(travelDate, travelTime);
+                LocalDate travelDate = LocalDate.of(2025, 11, 21);
+                LocalTime travelTimeStart = LocalTime.of(startHour, 00);
+                LocalTime travelTimeEnd = LocalTime.of(endHour, 00);
+                System.out.println("Time Window Start: " + travelTimeStart + " End: " + travelTimeEnd);
+                LocalDateTime startDateTime = LocalDateTime.of(travelDate, travelTimeStart);
 
 
-                GTFSLoader loader = new GTFSLoader("D:\\Filtered_gtfs_feed_delfi", startDateTime);
+                GTFSLoader loader = new GTFSLoader("D:\\Filtered_gtfs_feed_delfi", travelDate);
 
                 GraphBuilder builder = new GraphBuilder();
-                DefaultDirectedWeightedGraph<Stop, DefaultWeightedEdge> graph = builder.buildGraph(loader, walkingSpeed, maxWalkingDistance);
+                DefaultDirectedWeightedGraph<Stop, DefaultWeightedEdge> graph = builder.buildGraph(loader, travelTimeStart, travelTimeEnd, walkingSpeed, maxWalkingDistance);
 
                 Map<String, Stop> allStops = new HashMap<>();
                 for (Stop stop : loader.getAllStops()) {
-                    allStops.put(stop.getId().getId().toString(), stop);
+                    allStops.put(stop.getId().getId(), stop);
                 }
 
                 Map<String, List<Stop>> gridStops = loadGridStops("C:\\Users\\prana\\IdeaProjects\\JAVA\\keyPerformanceI - Copy\\src\\main\\java\\com\\example\\grid_stops.csv", allStops);
 
                 System.out.println("People "+ peopleFromOD);
-                List<Stop> bestRoute = findFastestConnection(args, graph, gridStops, obj, startDateTime, loader, walkingSpeed);
+                List<Stop> bestRoute = findFastestConnection(args, graph, gridStops, obj, loader, walkingSpeed);
                 if(bestRoute != null){
-                    KpiIndicator kpiIndicator = new KpiIndicator(bestRoute.get(0),bestRoute.get(1), obj.get("origin").toString(), obj.get("destination").toString(), time, kpiFilePath, peopleFromOD, loader, graph, startDateTime, walkingSpeed);
+                    KpiIndicator kpiIndicator = new KpiIndicator(bestRoute.get(0),bestRoute.get(1), obj.get("origin").toString(), obj.get("destination").toString(), time, maxWalkingDistance, kpiFilePath, peopleFromOD, loader, graph, startDateTime, walkingSpeed);
                     kpiIndicator.calculateKpi();
                 } else {
                     try (BufferedWriter writer = new BufferedWriter(new FileWriter(kpiFilePath, true))) {
@@ -168,7 +171,7 @@ public class Main {
 
     private static List<Stop> findFastestConnection(String[] args, DefaultDirectedWeightedGraph<Stop, DefaultWeightedEdge> graph,
                                                     Map<String, List<Stop>> gridStops,
-                                                    Map<String, Object> obj, LocalDateTime startDateTime, GTFSLoader loader, double walkingSpeed) throws Exception {
+                                                    Map<String, Object> obj, GTFSLoader loader, double walkingSpeed) throws Exception {
 
         String startGrid = obj.get("origin").toString();
         String endGrid = obj.get("destination").toString();
