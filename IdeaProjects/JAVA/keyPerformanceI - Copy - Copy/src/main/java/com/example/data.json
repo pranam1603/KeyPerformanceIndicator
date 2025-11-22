@@ -1,0 +1,68 @@
+[
+  {
+    "origin": "250mN301850E444750",
+    "destination": "250mN301925E445000",
+    "timeslots": {
+      "12-14": {
+        "work": 19.20,
+        "shopping": 2.15
+      }
+    }
+  },
+  {
+    "origin": "250mN301850E444750",
+    "destination": "250mN301925E445000",
+    "timeslots": {
+      "08-10" : {
+        "work": 19.20,
+        "shopping": 2.15
+      }
+    }
+  },
+  {
+    "origin": "250mN302000E444650",
+    "destination": "250mN301850E444750",
+    "timeslots": {
+      "08-10" : {
+        "work": 19.20,
+        "shopping": 2.15
+      }
+    }
+  },
+  {
+    "origin": "250mN301825E444750",
+    "destination": "250mN301925E445000",
+    "timeslots": {
+      "08-10" : {
+        "leisure": 4.15
+      },
+      "12-14" : {
+        "office": 1.15
+      }
+    }
+  },
+  {
+    "origin": "250mN301850E444775",
+    "destination": "250mN301925E445000",
+    "timeslots": {
+      "08-10" : {
+        "leisure": 9.20,
+        "school": 0.15
+      },
+      "12-14" : {
+        "work": 9.20,
+        "office": 0.15
+      }
+    }
+  },
+  {
+    "origin": "250mN301850E444725",
+    "destination": "250mN301925E445000",
+    "timeslots": {
+      "12-14" : {
+        "leisure": 9.20,
+        "school": 0.15
+      }
+    }
+  }
+]

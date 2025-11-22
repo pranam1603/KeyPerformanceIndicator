@@ -20,12 +20,9 @@ import org.geotools.data.simple.SimpleFeatureCollection;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import pabeles.concurrency.IntOperatorTask;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
-import java.io.FileReader;
-import java.io.IOException;
 import java.time.LocalTime;
-import java.io.BufferedReader;
 
 public class DemandCalculator {
     public static List<String> getIntersectGrids(String origin, double lon, double lat, double timeMinutes, double walkingSpeed) throws Exception {
@@ -96,70 +93,74 @@ public class DemandCalculator {
     public static double getTotalDemand(List<String> gridList, String time, String destination) throws IOException {
 
         // FIXED JSON (was invalid earlier)
-        String tempData = """
-            [
-                {
-                    "origin": "250mN301850E444750",
-                    "destination": "250mN301925E445000",
-                    "timeslots": {
-                        "08-10" : {
-                            "work": 19.20,
-                            "shopping": 2.15
-                        }
-                    }
-                },
-                {
-                    "origin": "250mN302000E444650",
-                    "destination": "250mN301850E444750",
-                    "timeslots": {
-                        "08-10" : {
-                            "work": 19.20,
-                            "shopping": 2.15
-                        }
-                    }
-                },
-                {
-                    "origin": "250mN301825E444750",
-                    "destination": "250mN301925E445000",
-                    "timeslots": {
-                        "08-10" : {
-                            "leisure": 4.15
-                        },
-                        "12-14" : {
-                            "office": 1.15
-                        }
-                    }
-                },
-                {
-                    "origin": "250mN301850E444775",
-                    "destination": "250mN301925E445000",
-                    "timeslots": {
-                        "08-10" : {
-                            "leisure": 9.20,
-                            "school": 0.15
-                        },
-                        "12-14" : {
-                            "work": 9.20,
-                            "office": 0.15
-                        }
-                    }
-                },
-                {
-                    "origin": "250mN301850E444725",
-                    "destination": "250mN301925E445000",
-                    "timeslots": {
-                        "12-14" : {
-                            "leisure": 9.20,
-                            "school": 0.15
-                        }
-                    }
-                }
-            ]
-            """;
+//        String jsonData = """
+//            [
+//                {
+//                    "origin": "250mN301850E444750",
+//                    "destination": "250mN301925E445000",
+//                    "timeslots": {
+//                        "08-10" : {
+//                            "work": 19.20,
+//                            "shopping": 2.15
+//                        }
+//                    }
+//                },
+//                {
+//                    "origin": "250mN302000E444650",
+//                    "destination": "250mN301850E444750",
+//                    "timeslots": {
+//                        "08-10" : {
+//                            "work": 19.20,
+//                            "shopping": 2.15
+//                        }
+//                    }
+//                },
+//                {
+//                    "origin": "250mN301825E444750",
+//                    "destination": "250mN301925E445000",
+//                    "timeslots": {
+//                        "08-10" : {
+//                            "leisure": 4.15
+//                        },
+//                        "12-14" : {
+//                            "office": 1.15
+//                        }
+//                    }
+//                },
+//                {
+//                    "origin": "250mN301850E444775",
+//                    "destination": "250mN301925E445000",
+//                    "timeslots": {
+//                        "08-10" : {
+//                            "leisure": 9.20,
+//                            "school": 0.15
+//                        },
+//                        "12-14" : {
+//                            "work": 9.20,
+//                            "office": 0.15
+//                        }
+//                    }
+//                },
+//                {
+//                    "origin": "250mN301850E444725",
+//                    "destination": "250mN301925E445000",
+//                    "timeslots": {
+//                        "12-14" : {
+//                            "leisure": 9.20,
+//                            "school": 0.15
+//                        }
+//                    }
+//                }
+//            ]
+//            """;
+
+        String dataPath = "C:\\Users\\prana\\IdeaProjects\\JAVA\\keyPerformanceI - Copy - Copy\\src\\main\\java\\com\\example\\data.json";
+        InputStream inputStream = new FileInputStream(dataPath);
+        InputStreamReader jsonData = new InputStreamReader(inputStream);
 
         Gson gson = new Gson();
         List<Map<String, Object>> tempdata = gson.fromJson(
-                tempData,
+                jsonData,
                 new TypeToken<List<Map<String, Object>>>() {}.getType()
         );
 
@@ -177,12 +178,12 @@ public class DemandCalculator {
             // 2️⃣ Check destination matches company destination
             if (!dest.equals(destination)) continue;
 
-            // 3️⃣ Extract timeslots
+            // Extract timeslots
             Map<String, Object> timeslots = (Map<String, Object>) item.get("timeslots");
 
             if (!timeslots.containsKey(time)) continue;
 
-            // 4️⃣ Get the selected time block (e.g., "08-10")
+            // Get the selected time block (e.g., "08-10")
             Map<String, Object> activities = (Map<String, Object>) timeslots.get(time);
 
             // 5️⃣ Add all values (work, shopping, leisure, office, school)

@@ -1,5 +1,6 @@
 package com.example;
 
+import com.example.GridCenterFinder.GridCenterFinder;
 import com.google.gson.Gson;
 import com.example.KpiIndicator.KpiIndicator;
 import com.google.gson.reflect.TypeToken;
@@ -8,8 +9,6 @@ import com.example.OneBusLoader.GraphBuilder;
 import com.example.DemandCalculator.DemandCalculator;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.onebusaway.gtfs.model.Stop;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
@@ -31,20 +30,10 @@ public class Main {
         double walkingSpeed = Double.parseDouble(dotenv.get("walkingSpeed")); // meters per minute (~5 km/h)
         double maxWalkingDistance = Double.parseDouble(dotenv.get("maxWalkingDistance")); // meters
 
-        String jsonData = """
-                [
-                    {
-                        "origin": "250mN301850E444750",
-                        "destination": "250mN301925E445000",
-                        "timeslots": {
-                            "12-14" : {
-                                "work": 19.20,
-                                "shopping": 2.15
-                            }
-                        }
-                    }
-                ]
-                """;
+        String dataPath = "C:\\Users\\prana\\IdeaProjects\\JAVA\\keyPerformanceI - Copy - Copy\\src\\main\\java\\com\\example\\data.json";
+        InputStream inputStream = new FileInputStream(dataPath);
+        InputStreamReader jsonData = new InputStreamReader(inputStream);
+
         Gson gson = new Gson();
         List<Map<String, Object>> data = gson.fromJson(
                 jsonData,
@@ -69,7 +58,7 @@ public class Main {
                 int startHour = Integer.parseInt(parts[0]);  // "08" → 8
                 int endHour = Integer.parseInt(parts[1]);  // "08" → 8
 
-                LocalDate travelDate = LocalDate.of(2025, 11, 21);
+                LocalDate travelDate = LocalDate.now();
                 LocalTime travelTimeStart = LocalTime.of(startHour, 00);
                 LocalTime travelTimeEnd = LocalTime.of(endHour, 00);
                 System.out.println("Time Window Start: " + travelTimeStart + " End: " + travelTimeEnd);
@@ -143,7 +132,7 @@ public class Main {
     }
 
     public static double haversine(double lat1, double lon1, double lat2, double lon2) {
-        double R = 6371000; // Earth radius in meters
+        double R = 6371000;
         double dLat = Math.toRadians(lat2 - lat1);
         double dLon = Math.toRadians(lon2 - lon1);
         double a = Math.sin(dLat/2)*Math.sin(dLat/2) +
@@ -182,50 +171,16 @@ public class Main {
         double endCenterLon = 0;
         double endCenterLat = 0;
 
+        GridCenterFinder gridCenterFinder = new GridCenterFinder();
+
         if (startStops.isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            try (BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\prana\\IdeaProjects\\JAVA\\keyPerformanceI - Copy\\src\\main\\java\\com\\example\\grid_filtered.geojson"))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    sb.append(line);
-                }
-            }
+            List<Double> startCoordinates = gridCenterFinder.getLatLon(startGrid);
+            startCenterLat = startCoordinates.get(0);
+            startCenterLon = startCoordinates.get(1);
 
-            JSONObject root = new JSONObject(sb.toString());
-            JSONArray features = root.getJSONArray("features");
-
-            for (int i = 0; i < features.length(); i++) {
-                JSONObject feature = features.getJSONObject(i);
-                JSONObject properties = feature.getJSONObject("properties");
-                String id = properties.getString("id");
-                if (startGrid.equals(id)) {
-                    // Get polygon coordinates
-                    JSONArray coordinates = feature.getJSONObject("geometry")
-                            .getJSONArray("coordinates")
-                            .getJSONArray(0);
-
-                    double sumLon = 0;
-                    double sumLat = 0;
-                    int n = coordinates.length()-1;
-
-                    for (int j = 0; j < n; j++) {
-                        JSONArray coord = coordinates.getJSONArray(j);
-                        double lon = coord.getDouble(0);
-                        double lat = coord.getDouble(1);
-                        sumLon += lon;
-                        sumLat += lat;
-                    }
-
-                    startCenterLon = sumLon / n;
-                    startCenterLat = sumLat / n;
-
-                    System.out.println("Center Lat: " + startCenterLat + ", Lon: " + startCenterLon);
-                }
-            }
             System.out.println("No stops found for starting grids.");
             DemandCalculator demandCalculator = new DemandCalculator();
             List<String> nearbyGrids = demandCalculator.getIntersectGrids(startGrid, startCenterLon, startCenterLat, 7.5, walkingSpeed);
-
 
             System.out.println("Intersecting start grids: " + nearbyGrids.size());
             startStops = new ArrayList<>();
@@ -242,49 +197,13 @@ public class Main {
         }
 
         if (endStops.isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            try (BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\prana\\IdeaProjects\\JAVA\\keyPerformanceI - Copy\\src\\main\\java\\com\\example\\grid_filtered.geojson"))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    sb.append(line);
-                }
-            }
+            List<Double> endCoordinates = GridCenterFinder.getLatLon(endGrid);
+            endCenterLat = endCoordinates.get(0);
+            endCenterLon = endCoordinates.get(1);
 
-            JSONObject root = new JSONObject(sb.toString());
-            JSONArray features = root.getJSONArray("features");
-
-            for (int i = 0; i < features.length(); i++) {
-                JSONObject feature = features.getJSONObject(i);
-                JSONObject properties = feature.getJSONObject("properties");
-                String id = properties.getString("id");
-
-                if (endGrid.equals(id)) {
-                    // Get polygon coordinates
-                    JSONArray coordinates = feature.getJSONObject("geometry")
-                            .getJSONArray("coordinates")
-                            .getJSONArray(0);
-
-                    double sumLon = 0;
-                    double sumLat = 0;
-                    int n = coordinates.length()-1;
-                    System.out.println(n + " no od coords");
-                    for (int j = 0; j < n; j++) {
-                        JSONArray coord = coordinates.getJSONArray(j);
-                        double lon = coord.getDouble(0);
-                        double lat = coord.getDouble(1);
-                        sumLon += lon;
-                        sumLat += lat;
-                    }
-                    endCenterLon = sumLon / n;
-                    endCenterLat = sumLat / n;
-
-                    System.out.println("Center Lat: " + endCenterLat + ", Lon: " + endCenterLon);
-                }
-            }
             System.out.println("No stops found for end grids.");
             DemandCalculator demandCalculator = new DemandCalculator();
             List<String> nearbyGrids = demandCalculator.getIntersectGrids(startGrid, endCenterLon, endCenterLat, 7.5, walkingSpeed);
-
 
             System.out.println("Intersecting end grids: " + nearbyGrids.size());
             endStops = new ArrayList<>();
@@ -314,9 +233,7 @@ public class Main {
                         bestStart = s;
                         bestEnd = e;
                     }
-                } catch (Exception ignored) {
-                    // BAAAAAAAD
-                }
+                } catch (Exception ignored) {}
             }
         }
         System.out.println("Best Start: " + bestStart + " " + bestEnd);
